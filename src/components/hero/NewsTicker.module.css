@@ -1,0 +1,73 @@
+.wrapper {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 38px;
+    background: rgba(7, 12, 20, 0.97);
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    z-index: 10;
+    gap: 0;
+}
+
+.liveTag {
+    flex-shrink: 0;
+    padding: 0 18px;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: var(--blue-400);
+    text-transform: uppercase;
+    border-right: 1px solid var(--border-subtle);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: rgba(37, 99, 235, 0.06);
+    white-space: nowrap;
+}
+
+.counter {
+    flex-shrink: 0;
+    padding: 0 14px;
+    font-size: 9px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    border-right: 1px solid var(--border-subtle);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.track {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    flex: 1;
+    height: 100%;
+}
+
+.belt {
+    display: flex;
+    flex-shrink: 0;
+    animation: marquee linear infinite;
+    will-change: transform;
+}
+
+.text {
+    white-space: nowrap;
+    font-size: 11px;
+    color: var(--text-secondary);
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+}
+
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}

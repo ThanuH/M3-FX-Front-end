@@ -1,66 +1,75 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { getMarketData } from '@/lib/api';
+import type { MarketStats } from '@/lib/types';
+import HeroSection from '@/components/hero/HeroSection';
+import MarketSnapshot from '@/components/market/MarketSnapshot';
+import HowItWorks from '@/components/howItWorks/HowItWorks';
 
-export default function Home() {
+function computeMarketStatus(): boolean {
+  const now = new Date();
+  const hour = now.getHours();
+  const day = now.getDay();
+  return day >= 1 && day <= 5 && hour >= 9 && hour < 17;
+}
+
+async function fetchPageData(): Promise<{ stats: MarketStats | null }> {
+  try {
+    const marketRes = await getMarketData(60);
+
+    const rows = marketRes.rows;
+    if (!rows || rows.length < 2) return { stats: null };
+
+    const latest = rows[rows.length - 1];
+    const prev = rows[rows.length - 2];
+    const prevWk = rows.length > 7 ? rows[rows.length - 7] : rows[0];
+
+    const rate = latest.target_price;
+    const ratePrev = prev.target_price;
+    const rateWk = prevWk.target_price;
+
+    const dailyChange = rate - ratePrev;
+    const dailyChangePct = (dailyChange / ratePrev) * 100;
+    const weeklyChange = rate - rateWk;
+    const weeklyChangePct = (weeklyChange / rateWk) * 100;
+
+    const tail30 = rows.slice(-30);
+    let volatility30 = 0;
+    if (tail30.length > 1) {
+      const returns = tail30.slice(1).map((r, i) => (r.target_price - tail30[i].target_price) / tail30[i].target_price);
+      const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+      const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
+      volatility30 = Math.sqrt(variance) * 100;
+    }
+
+    const feats = latest.features;
+    const stats: MarketStats = {
+      currentRate: rate,
+      dailyChange,
+      dailyChangePct,
+      weeklyChange,
+      weeklyChangePct,
+      volatility30,
+      dxy: feats['dxy_rate'] ?? 0,
+      gdpGrowth: feats['gdp_growth'] ?? 0,
+      inflation: feats['inflation'] ?? 0,
+      sentiment: feats['sentiment_decay'] ?? 0,
+      lastUpdated: latest.date.slice(0, 10),
+    };
+
+    return { stats };
+  } catch {
+    return { stats: null };
+  }
+}
+
+export default async function Home() {
+  const { stats } = await fetchPageData();
+  const isOpen = computeMarketStatus();
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <>
+      <HeroSection isMarketOpen={isOpen} />
+      <MarketSnapshot stats={stats} />
+      <HowItWorks />
+    </>
   );
 }

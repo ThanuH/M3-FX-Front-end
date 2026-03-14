@@ -1,0 +1,225 @@
+/* Pipeline */
+.pipeline {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+}
+
+.pipeline::before {
+    content: '';
+    position: absolute;
+    top: 28px;
+    left: 28px;
+    right: 28px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--blue-600), var(--violet-500), var(--amber-500), var(--blue-600));
+    opacity: 0.2;
+    z-index: 0;
+}
+
+.step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+    padding: 0 12px;
+}
+
+.stepIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.step:hover .stepIcon {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 28px var(--blue-glow);
+}
+
+.stepNum {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+}
+
+.stepTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.stepDesc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.65;
+    max-width: 150px;
+}
+
+.stepArrow {
+    position: absolute;
+    top: 27px;
+    right: -14px;
+    font-size: 18px;
+    color: var(--border);
+    z-index: 2;
+}
+
+/* Source cards */
+.sourcesGrid {
+    margin-bottom: 4px;
+}
+
+.srcCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 24px 22px;
+    transition: border-color var(--transition), transform var(--transition);
+}
+
+.srcCard:hover {
+    transform: translateY(-3px);
+    border-color: var(--border-glow);
+}
+
+.srcIcon {
+    font-size: 26px;
+    margin-bottom: 14px;
+}
+
+.srcTag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
+.srcTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.srcDesc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-bottom: 14px;
+}
+
+.pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: rgba(37, 99, 235, .07);
+    color: var(--blue-400);
+    border: 1px solid rgba(37, 99, 235, .16);
+}
+
+/* Architecture */
+.archGrid {}
+
+.archCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 28px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.archCard:hover {
+    border-color: rgba(139, 92, 246, .28);
+    box-shadow: 0 6px 28px rgba(139, 92, 246, .08);
+}
+
+.archIcon {
+    font-size: 28px;
+    margin-bottom: 16px;
+}
+
+.archTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.archDesc {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 16px;
+}
+
+.archStat {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--violet-400);
+    background: rgba(139, 92, 246, .08);
+    border: 1px solid rgba(139, 92, 246, .16);
+    border-radius: 5px;
+    display: inline-block;
+    padding: 4px 12px;
+}
+
+/* Why */
+.whyGrid {}
+
+.whyCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--blue-600);
+    border-radius: var(--radius-md);
+    padding: 22px;
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.whyCard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 24px var(--blue-glow);
+}
+
+.whyIcon {
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+
+.whyTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.whyDesc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.65;
+}
