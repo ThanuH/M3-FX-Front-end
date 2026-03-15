@@ -1,11 +1,11 @@
 .pageHeader {
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border);
-    padding: 20px 48px;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 28px 48px 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 100%;
+    gap: 20px;
 }
 
 .headerLeft {
@@ -56,6 +56,20 @@
     border: 1px solid rgba(37, 99, 235, .2);
     border-radius: 5px;
     padding: 6px 14px;
+}
+
+@media (max-width: 900px) {
+    .pageHeader {
+        padding: 24px 24px 10px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .headerLeft {
+        gap: 14px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 /* Controls */

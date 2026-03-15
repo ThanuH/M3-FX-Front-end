@@ -1,6 +1,7 @@
 import type {
     HistoryResponse,
     MarketDataResponse,
+    MarketSnapshotResponse,
     NewsResponse,
     ForecastResponse,
     HealthResponse,
@@ -31,6 +32,10 @@ export async function getPriceHistory(limit = 120): Promise<HistoryResponse> {
 
 export async function getMarketData(limit = 60): Promise<MarketDataResponse> {
     return apiFetch<MarketDataResponse>(`/market/data?limit=${limit}`);
+}
+
+export async function getMarketSnapshotToday(lookback = 60): Promise<MarketSnapshotResponse> {
+    return apiFetch<MarketSnapshotResponse>(`/market/snapshot/today?lookback=${lookback}`);
 }
 
 export async function getNews(): Promise<NewsResponse> {

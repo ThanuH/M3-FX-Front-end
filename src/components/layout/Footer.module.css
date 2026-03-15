@@ -1,0 +1,144 @@
+.footer {
+    position: relative;
+    border-top: 1px solid var(--border);
+    background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 32%),
+        linear-gradient(180deg, var(--bg-surface), var(--bg-base));
+}
+
+.inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 36px 48px 28px;
+}
+
+.top {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1.2fr;
+    gap: 28px;
+    padding-bottom: 24px;
+}
+
+.brandBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+}
+
+.logo {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.logoAccent {
+    background: linear-gradient(135deg, var(--blue-500), var(--amber-400));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.tag {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+
+.copy {
+    max-width: 440px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+}
+
+.sectionTitle {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+}
+
+.links,
+.notes {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.link {
+    width: fit-content;
+    font-size: 12px;
+    color: var(--text-secondary);
+    transition: color var(--transition);
+}
+
+.link:hover {
+    color: var(--blue-400);
+}
+
+.note {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.bottom {
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.meta,
+.disclaimer {
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.disclaimer {
+    text-align: right;
+    max-width: 540px;
+}
+
+@media (max-width: 980px) {
+    .top {
+        grid-template-columns: 1fr;
+    }
+
+    .bottom {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .disclaimer {
+        text-align: left;
+    }
+}
+
+@media (max-width: 640px) {
+    .inner {
+        padding: 28px 20px 22px;
+    }
+
+    .logo {
+        font-size: 21px;
+    }
+}

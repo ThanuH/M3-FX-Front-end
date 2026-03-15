@@ -23,6 +23,32 @@ export interface MarketDataResponse {
   total: number;
 }
 
+export interface MarketSnapshotResponse {
+  as_of_date: string;
+  fx: {
+    pair: string;
+    spot: number;
+    daily_change: {
+      value: number;
+      pct: number;
+    };
+    weekly_change: {
+      value: number;
+      pct: number;
+    };
+    volatility_30d_annualized_pct: number;
+  };
+  macro: {
+    dxy_index: number;
+    gdp_growth_pct: number;
+    inflation_rate_pct: number;
+    sentiment_score: number;
+    inflation_regime: string;
+    sentiment_label: string;
+  };
+  data_points_used: number;
+}
+
 export interface HeadlineItem {
   snippet: string;
   url: string;

@@ -49,6 +49,11 @@ export default function Navbar() {
                         <span className={styles.dot} />
                         Historical
                     </Link>
+                    <Link href="/news"
+                        className={`${styles.link} ${pathname === '/news' ? styles.active : ''}`}>
+                        <span className={styles.dot} />
+                        News
+                    </Link>
 
                     <div className={styles.divider} />
 

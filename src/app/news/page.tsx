@@ -1,5 +1,6 @@
 import { getNews } from '@/lib/api';
 import { format, parseISO } from 'date-fns';
+import Link from 'next/link';
 import styles from './page.module.css';
 
 export const metadata = {
@@ -21,9 +22,12 @@ export default async function NewsPage() {
         <>
             {/* Page header */}
             <div className={styles.pageHeader}>
-                <div>
-                    <div className={styles.headerTitle}>Market News</div>
-                    <div className={styles.headerSub}>Live headlines &nbsp;·&nbsp; Economy Next &nbsp;·&nbsp; USD / LKR</div>
+                <div className={styles.headerLeft}>
+                    <Link href="/" className={styles.backLink}>← Back</Link>
+                    <div>
+                        <div className={styles.headerTitle}>Market News</div>
+                        <div className={styles.headerSub}>Live headlines &nbsp;·&nbsp; Economy Next &nbsp;·&nbsp; USD / LKR</div>
+                    </div>
                 </div>
                 <div className={styles.headerBadge}>📰 {headlines.length} Headlines</div>
             </div>
