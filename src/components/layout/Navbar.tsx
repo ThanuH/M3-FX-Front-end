@@ -44,6 +44,11 @@ export default function Navbar() {
                         <span className={styles.dot} />
                         Forecast
                     </Link>
+                    <Link href="/accuracy"
+                        className={`${styles.link} ${pathname === '/accuracy' ? styles.active : ''}`}>
+                        <span className={styles.dot} />
+                        Accuracy
+                    </Link>
                     <Link href="/historical"
                         className={`${styles.link} ${pathname === '/historical' ? styles.active : ''}`}>
                         <span className={styles.dot} />

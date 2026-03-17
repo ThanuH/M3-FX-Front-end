@@ -41,7 +41,7 @@ export default function HeroSection({ isMarketOpen }: Props) {
                     </div>
                     <div className={styles.statSep} />
                     <div className={styles.stat}>
-                        <div className={styles.statVal}>60d</div>
+                        <div className={styles.statVal}>30d</div>
                         <div className={styles.statLbl}>Lookback</div>
                     </div>
                     <div className={styles.statSep} />
@@ -61,10 +61,10 @@ export default function HeroSection({ isMarketOpen }: Props) {
                 {/* CTA buttons */}
                 <div className={styles.cta}>
                     <Link href="/forecast" className="btn-primary">
-                        ⚡ Open Forecast
+                         Open Forecast
                     </Link>
                     <a href="#how-it-works" className="btn-secondary">
-                        📖 How It Works
+                         How It Works
                     </a>
                 </div>
 

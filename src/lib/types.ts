@@ -100,3 +100,79 @@ export interface MarketStats {
   sentiment: number;
   lastUpdated: string;
 }
+
+export interface HorizonAnalysisDataPoint {
+  created_date: string;
+  t1_forecast: number;
+  t2_forecast: number;
+  t3_forecast: number;
+  t4_forecast: number;
+  t5_forecast: number;
+  t1_actual: number | null;
+  t2_actual: number | null;
+  t3_actual: number | null;
+  t4_actual: number | null;
+  t5_actual: number | null;
+}
+
+export interface HorizonAnalysisResponse {
+  data: HorizonAnalysisDataPoint[];
+  mae: {
+    t1: number;
+    t2: number;
+    t3: number;
+    t4: number;
+    t5: number;
+  };
+}
+
+export interface ForecastExplanationItem {
+  horizon: number;
+  predicted_price: number;
+  explanation: string;
+  source: 'cache' | 'generated';
+}
+
+export interface SHAPDriver {
+  feature: string;
+  label: string;
+  feature_value: number;
+  shap_value: number | null;
+}
+
+export interface SentimentContribution {
+  date: string;
+  days_ago: number;
+  decay_weight: number;
+  weight_pct: number;
+  article_count: number;
+  headlines: string[];
+  urls: string[];
+}
+
+export interface SentimentTraceSource {
+  has_fresh_news: boolean;
+  contributions: SentimentContribution[];
+}
+
+export interface CBSLSentiment {
+  original_score: number;
+  published_date: string;
+  days_since_published: number;
+  decayed_score: number;
+  remaining_pct: number;
+  is_fresh: boolean;
+}
+
+export interface SentimentTrace {
+  economynext: SentimentTraceSource;
+  cbsl: CBSLSentiment;
+}
+
+export interface ForecastExplanationResponse {
+  created_date: string;
+  items: ForecastExplanationItem[];
+  shap_drivers: SHAPDriver[];
+  sentiment_trace: SentimentTrace;
+  source: 'cache' | 'mixed' | 'generated';
+}

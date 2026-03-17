@@ -4,9 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import dynamic from 'next/dynamic';
-import type { ForecastResponse, PricePoint } from '@/lib/types';
+import type { ForecastResponse, PricePoint, ForecastExplanationResponse } from '@/lib/types';
+import { getForecastExplanation } from '@/lib/api';
 import DayCards from '@/components/forecast/DayCards';
 import TradeBrief from '@/components/forecast/TradeBrief';
+import ForecastExplanation from '@/components/forecast/ForecastExplanation';
 import styles from './page.module.css';
 
 const ForecastChart = dynamic(() => import('@/components/forecast/ForecastChart'), { ssr: false });
@@ -16,12 +18,14 @@ type Status = 'idle' | 'loading' | 'done' | 'error';
 export default function ForecastPage() {
     const [status, setStatus] = useState<Status>('idle');
     const [forecast, setForecast] = useState<ForecastResponse | null>(null);
+    const [explanation, setExplanation] = useState<ForecastExplanationResponse | null>(null);
     const [history, setHistory] = useState<PricePoint[]>([]);
     const [errorMsg, setErrorMsg] = useState('');
 
     async function runForecast() {
         setStatus('loading');
         setForecast(null);
+        setExplanation(null);
         setErrorMsg('');
         try {
             const [fcRes, histRes] = await Promise.all([
@@ -34,8 +38,19 @@ export default function ForecastPage() {
                     return r.json().then((d: { points: PricePoint[] }) => d.points);
                 }),
             ]);
+            
             setForecast(fcRes);
             setHistory(histRes);
+            
+            // Fetch explanation for the forecast using the forecast date
+            try {
+                const explRes = await getForecastExplanation(fcRes.last_known_date);
+                setExplanation(explRes);
+            } catch (explError) {
+                console.warn('Failed to fetch explanation:', explError);
+                // Continue without explanation - it's optional
+            }
+            
             setStatus('done');
         } catch (e) {
             setErrorMsg(e instanceof Error ? e.message : 'Unknown error');
@@ -46,6 +61,7 @@ export default function ForecastPage() {
     function reset() {
         setStatus('idle');
         setForecast(null);
+        setExplanation(null);
         setHistory([]);
     }
 
@@ -94,7 +110,7 @@ export default function ForecastPage() {
                             {status === 'loading' ? (
                                 <><span className="spinner" style={{ width: 16, height: 16 }} /> Running Model…</>
                             ) : (
-                                '⚡ Generate Forecast'
+                                ' Generate Forecast'
                             )}
                         </button>
 
@@ -186,6 +202,9 @@ export default function ForecastPage() {
                                     <TradeBrief forecast={forecast} />
                                 </div>
                             </div>
+
+                            {/* Forecast Explanations */}
+                            {explanation && <ForecastExplanation explanation={explanation} />}
                         </div>
                     )}
 
