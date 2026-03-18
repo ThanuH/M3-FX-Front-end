@@ -35,7 +35,7 @@ function rowSortKey(r: Record<string, number | string | null>): number {
 function friendlyLabel(col: string): string {
     return (
         COLUMN_LABELS[col] ??
-        col.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        col.replaceAll('_', ' ').replace(/\b\w/g, c => c.toUpperCase())
     );
 }
 
@@ -114,7 +114,7 @@ export default function HistoricalPage() {
         data && selectedCol
             ? data.records
                   .map(r => Number(r[selectedCol]))
-                  .filter(v => !isNaN(v) && isFinite(v))
+                  .filter(v => !Number.isNaN(v) && Number.isFinite(v))
             : [];
 
     const minVal = values.length ? Math.min(...values) : 0;

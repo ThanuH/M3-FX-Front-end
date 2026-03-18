@@ -77,8 +77,7 @@ export default async function NewsPage() {
                                                 rel="noopener noreferrer"
                                                 className={styles.readMore}
                                             >
-                                                Read full article
-                                                <span className={styles.arrow}>↗</span>
+                                                Read full article<span className={styles.arrow}>↗</span>
                                             </a>
                                         ) : (
                                             <span className={styles.readMoreDisabled}>No link available</span>

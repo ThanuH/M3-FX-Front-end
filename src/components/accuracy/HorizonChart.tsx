@@ -44,7 +44,6 @@ const CustomTooltip = ({ active, payload, label }: {
 };
 
 export default function HorizonChart({ data, horizon }: Props) {
-    const horizonKey = horizon as keyof HorizonAnalysisDataPoint;
     const forecastKey = `${horizon}_forecast` as const;
     const actualKey = `${horizon}_actual` as const;
 

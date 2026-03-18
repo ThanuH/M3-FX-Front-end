@@ -21,7 +21,7 @@ export default function HeroSection({ isMarketOpen }: Props) {
             <div className={styles.left}>
                 <div className={styles.eyebrow}>
                     <span className={styles.eyebrowLine} />
-                    USD / LKR &nbsp;·&nbsp; FX Intelligence Platform
+                    <span>USD / LKR &nbsp;·&nbsp; FX Intelligence Platform</span>
                 </div>
 
                 <h1 className={styles.title}>

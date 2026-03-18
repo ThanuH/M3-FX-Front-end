@@ -37,34 +37,34 @@ export default function Navbar() {
                     <Link href="/"
                         className={`${styles.link} ${pathname === '/' ? styles.active : ''}`}>
                         <span className={styles.dot} />
-                        Home
+                        <span>Home</span>
                     </Link>
                     <Link href="/forecast"
                         className={`${styles.link} ${pathname === '/forecast' ? styles.active : ''}`}>
                         <span className={styles.dot} />
-                        Forecast
+                        <span>Forecast</span>
                     </Link>
                     <Link href="/accuracy"
                         className={`${styles.link} ${pathname === '/accuracy' ? styles.active : ''}`}>
                         <span className={styles.dot} />
-                        Accuracy
+                        <span>Accuracy</span>
                     </Link>
                     <Link href="/historical"
                         className={`${styles.link} ${pathname === '/historical' ? styles.active : ''}`}>
                         <span className={styles.dot} />
-                        Historical
+                        <span>Historical</span>
                     </Link>
                     <Link href="/news"
                         className={`${styles.link} ${pathname === '/news' ? styles.active : ''}`}>
                         <span className={styles.dot} />
-                        News
+                        <span>News</span>
                     </Link>
 
                     <div className={styles.divider} />
 
                     <div className={`${styles.status} ${isOpen ? styles.open : styles.closed}`}>
                         <span className={styles.statusDot} />
-                        {isOpen ? 'Market Open' : 'Market Closed'}
+                        <span>{isOpen ? 'Market Open' : 'Market Closed'}</span>
                     </div>
                 </div>
             </div>

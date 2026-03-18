@@ -27,30 +27,38 @@ export default function AccuracyPage() {
     const [fromDate, setFromDate] = useState(MIN_DATE);
     const [toDate, setToDate] = useState(today);
 
-    async function fetchData() {
-        setStatus('loading');
-        setData(null);
-        setErrorMsg('');
-        try {
-            const result = await getHorizonAnalysis(fromDate, toDate);
-            setData(result);
-            setStatus('done');
-        } catch (e) {
-            setErrorMsg(e instanceof Error ? e.message : 'Unknown error');
-            setStatus('error');
-        }
+    async function fetchData(startDate: string, endDate: string) {
+        return getHorizonAnalysis(startDate, endDate);
     }
 
-    // Auto-fetch on component mount or date range change
+    // Auto-fetch on mount and when date range changes
     useEffect(() => {
-        if (fromDate && toDate) {
-            fetchData();
-        }
-    }, []); // Only on mount
+        if (!fromDate || !toDate) return;
+        void getHorizonAnalysis(fromDate, toDate)
+            .then((result) => {
+                setData(result);
+                setStatus('done');
+            })
+            .catch((e) => {
+                setErrorMsg(e instanceof Error ? e.message : 'Unknown error');
+                setStatus('error');
+            });
+    }, [fromDate, toDate]);
 
     function handleFetch() {
         if (fromDate && toDate) {
-            fetchData();
+            setStatus('loading');
+            setData(null);
+            setErrorMsg('');
+            void fetchData(fromDate, toDate)
+                .then((result) => {
+                    setData(result);
+                    setStatus('done');
+                })
+                .catch((e) => {
+                    setErrorMsg(e instanceof Error ? e.message : 'Unknown error');
+                    setStatus('error');
+                });
         }
     }
 
@@ -80,8 +88,9 @@ export default function AccuracyPage() {
                     {/* Date picker controls */}
                     <div className={styles.controls}>
                         <div className={styles.datePickerGroup}>
-                            <label className={styles.label}>From Date</label>
+                            <label htmlFor="from-date" className={styles.label}>From Date</label>
                             <input
+                                id="from-date"
                                 type="date"
                                 value={fromDate}
                                 onChange={(e) => setFromDate(e.target.value)}
@@ -92,8 +101,9 @@ export default function AccuracyPage() {
                         </div>
 
                         <div className={styles.datePickerGroup}>
-                            <label className={styles.label}>To Date</label>
+                            <label htmlFor="to-date" className={styles.label}>To Date</label>
                             <input
+                                id="to-date"
                                 type="date"
                                 value={toDate}
                                 onChange={(e) => setToDate(e.target.value)}
@@ -183,7 +193,7 @@ export default function AccuracyPage() {
                                                     data.mae[h as keyof typeof data.mae] < data.mae[best as keyof typeof data.mae] 
                                                         ? h 
                                                         : best
-                                                ).toUpperCase()
+                                                , horizons[0] ?? 't1').toUpperCase()
                                             }
                                         </div>
                                     </div>
@@ -196,7 +206,7 @@ export default function AccuracyPage() {
                     {status === 'idle' && (
                         <div className={styles.idleBox}>
                             <div className={styles.idleIcon}>📊</div>
-                            <div className={styles.idleText}>Select a date range and click "Fetch Analysis" to view forecast accuracy data</div>
+                            <div className={styles.idleText}>Select a date range and click &quot;Fetch Analysis&quot; to view forecast accuracy data</div>
                         </div>
                     )}
                 </div>
