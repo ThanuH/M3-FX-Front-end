@@ -60,11 +60,23 @@ export interface NewsResponse {
   count: number;
 }
 
+export interface ForecastInterval {
+  lower: number;
+  median: number;
+  upper: number;
+}
+
 export interface ForecastResponse {
   forecast_dates: string[];
-  forecasted_prices: number[];
+  t1: ForecastInterval;
+  t2: ForecastInterval;
+  t3: ForecastInterval;
+  t4: ForecastInterval;
+  t5: ForecastInterval;
   last_known_price: number;
   last_known_date: string;
+  calibration_factor: number;
+  coverage: number;
 }
 
 export interface HealthResponse {
@@ -124,6 +136,25 @@ export interface HorizonAnalysisResponse {
     t4: number;
     t5: number;
   };
+}
+
+export interface PerformanceComparison {
+  horizon: number;
+  forecast_date: string;
+  forecast_price: ForecastInterval;
+  actual_price: number | null;
+}
+
+export interface PerformanceRecord {
+  created_date: string;
+  forecast_start_date: string;
+  comparisons: PerformanceComparison[];
+}
+
+export interface PerformanceResponse {
+  records: PerformanceRecord[];
+  total: number;
+  columns: string[];
 }
 
 export interface ForecastExplanationItem {

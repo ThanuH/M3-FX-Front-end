@@ -2,67 +2,39 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { format } from 'date-fns';
 import dynamic from 'next/dynamic';
-import { getHorizonAnalysis } from '@/lib/api';
-import type { HorizonAnalysisResponse } from '@/lib/types';
+import { getPredictPerformance } from '@/lib/api';
+import type { PerformanceResponse } from '@/lib/types';
 import styles from './page.module.css';
 
 const HorizonChart = dynamic(() => import('@/components/accuracy/HorizonChart'), { ssr: false });
 
 type Status = 'idle' | 'loading' | 'done' | 'error';
-type Horizon = 't1' | 't2' | 't3' | 't4' | 't5';
-
-const MIN_DATE = '2026-01-01';
 
 export default function AccuracyPage() {
     const [status, setStatus] = useState<Status>('idle');
-    const [data, setData] = useState<HorizonAnalysisResponse | null>(null);
+    const [data, setData] = useState<PerformanceResponse | null>(null);
     const [errorMsg, setErrorMsg] = useState('');
-    const [selectedHorizon, setSelectedHorizon] = useState<Horizon>('t1');
+    const [limit, setLimit] = useState(100);
 
-    // Get today's date in YYYY-MM-DD format
-    const today = format(new Date(), 'yyyy-MM-dd');
-
-    const [fromDate, setFromDate] = useState(MIN_DATE);
-    const [toDate, setToDate] = useState(today);
-
-    async function fetchData(startDate: string, endDate: string) {
-        return getHorizonAnalysis(startDate, endDate);
-    }
-
-    // Auto-fetch on mount and when date range changes
+    // Auto-fetch on mount
     useEffect(() => {
-        if (!fromDate || !toDate) return;
-        void getHorizonAnalysis(fromDate, toDate)
-            .then((result) => {
-                setData(result);
-                setStatus('done');
-            })
-            .catch((e) => {
-                setErrorMsg(e instanceof Error ? e.message : 'Unknown error');
-                setStatus('error');
-            });
-    }, [fromDate, toDate]);
+        void handleFetch();
+    }, []);
 
-    function handleFetch() {
-        if (fromDate && toDate) {
-            setStatus('loading');
-            setData(null);
-            setErrorMsg('');
-            void fetchData(fromDate, toDate)
-                .then((result) => {
-                    setData(result);
-                    setStatus('done');
-                })
-                .catch((e) => {
-                    setErrorMsg(e instanceof Error ? e.message : 'Unknown error');
-                    setStatus('error');
-                });
+    async function handleFetch() {
+        setStatus('loading');
+        setData(null);
+        setErrorMsg('');
+        try {
+            const result = await getPredictPerformance(limit);
+            setData(result);
+            setStatus('done');
+        } catch (e) {
+            setErrorMsg(e instanceof Error ? e.message : 'Unknown error');
+            setStatus('error');
         }
     }
-
-    const horizons: Horizon[] = ['t1', 't2', 't3', 't4', 't5'];
 
     return (
         <>
@@ -72,7 +44,7 @@ export default function AccuracyPage() {
                     <Link href="/" className={styles.backLink}>← Back</Link>
                     <div>
                         <div className={styles.headerTitle}>Predictive Accuracy Overview</div>
-                        <div className={styles.headerSub}>Forecast vs Actual comparison across time horizons · USD / LKR</div>
+                        <div className={styles.headerSub}>Forecast vs Actual performance across horizons · USD / LKR</div>
                     </div>
                 </div>
             </div>
@@ -81,34 +53,21 @@ export default function AccuracyPage() {
             <section className="section">
                 <div className="container">
                     <div className="section-header">
-                        <div className="section-label">Date Range Selection</div>
-                        <div className="section-sub">Select dates from January 1, 2026 to today</div>
+                        <div className="section-label">Forecast Performance Analysis</div>
+                        <div className="section-sub">Compare predictions with actual prices across all time horizons</div>
                     </div>
 
-                    {/* Date picker controls */}
+                    {/* Controls */}
                     <div className={styles.controls}>
                         <div className={styles.datePickerGroup}>
-                            <label htmlFor="from-date" className={styles.label}>From Date</label>
+                            <label htmlFor="limit-input" className={styles.label}>Records to Display</label>
                             <input
-                                id="from-date"
-                                type="date"
-                                value={fromDate}
-                                onChange={(e) => setFromDate(e.target.value)}
-                                min={MIN_DATE}
-                                max={today}
-                                className={styles.dateInput}
-                            />
-                        </div>
-
-                        <div className={styles.datePickerGroup}>
-                            <label htmlFor="to-date" className={styles.label}>To Date</label>
-                            <input
-                                id="to-date"
-                                type="date"
-                                value={toDate}
-                                onChange={(e) => setToDate(e.target.value)}
-                                min={fromDate}
-                                max={today}
+                                id="limit-input"
+                                type="number"
+                                value={limit}
+                                onChange={(e) => setLimit(Math.max(1, parseInt(e.target.value) || 100))}
+                                min="1"
+                                max="500"
                                 className={styles.dateInput}
                             />
                         </div>
@@ -122,7 +81,7 @@ export default function AccuracyPage() {
                             {status === 'loading' ? (
                                 <><span className="spinner" style={{ width: 16, height: 16 }} /> Loading…</>
                             ) : (
-                                'Fetch Analysis'
+                                'Refresh Data'
                             )}
                         </button>
                     </div>
@@ -137,76 +96,24 @@ export default function AccuracyPage() {
                     {/* Results */}
                     {status === 'done' && data && (
                         <>
-                            {/* Horizon selection */}
-                            <div className={styles.section}>
-                                <div className={styles.sectionLabel}>Select Time Horizon</div>
-                                <div className={styles.horizonButtons}>
-                                    {horizons.map(h => (
-                                        <button
-                                            key={h}
-                                            className={`${styles.horizonBtn} ${selectedHorizon === h ? styles.active : ''}`}
-                                            onClick={() => setSelectedHorizon(h)}
-                                        >
-                                            {h.toUpperCase()}
-                                        </button>
-                                    ))}
+                            <div style={{ marginTop: 24, marginBottom: 24 }}>
+                                <div className="badge badge-neutral">
+                                    Total Records: <strong>{data.total}</strong> · Displaying: <strong>{data.records.length}</strong>
                                 </div>
                             </div>
 
                             {/* Chart */}
-                            <div className={styles.section}>
-                                <HorizonChart data={data.data} horizon={selectedHorizon} />
-                            </div>
-
-                            {/* MAE Metrics */}
-                            <div className={styles.section}>
-                                <div className={styles.sectionLabel}>Mean Absolute Error (MAE)</div>
-                                <div className={styles.metricsGrid}>
-                                    {horizons.map(h => (
-                                        <div key={h} className={styles.metricCard}>
-                                            <div className={styles.metricLabel}>{h.toUpperCase()}</div>
-                                            <div className={styles.metricValue}>
-                                                {data.mae[h as keyof typeof data.mae].toFixed(4)}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Statistics */}
-                            <div className={styles.section}>
-                                <div className={styles.sectionLabel}>Data Summary</div>
-                                <div className={styles.summaryGrid}>
-                                    <div className={styles.summaryItem}>
-                                        <div className={styles.summaryLabel}>Total Data Points</div>
-                                        <div className={styles.summaryValue}>{data.data.length}</div>
-                                    </div>
-                                    <div className={styles.summaryItem}>
-                                        <div className={styles.summaryLabel}>Date Range</div>
-                                        <div className={styles.summaryValue}>{fromDate} to {toDate}</div>
-                                    </div>
-                                    <div className={styles.summaryItem}>
-                                        <div className={styles.summaryLabel}>Best Performing Horizon</div>
-                                        <div className={styles.summaryValue}>
-                                            {
-                                                horizons.reduce((best, h) => 
-                                                    data.mae[h as keyof typeof data.mae] < data.mae[best as keyof typeof data.mae] 
-                                                        ? h 
-                                                        : best
-                                                , horizons[0] ?? 't1').toUpperCase()
-                                            }
-                                        </div>
-                                    </div>
-                                </div>
+                            <div style={{ marginTop: 32 }}>
+                                <p className="group-label">Forecast vs Actual Performance</p>
+                                <HorizonChart data={data} />
                             </div>
                         </>
                     )}
 
-                    {/* Idle state message */}
-                    {status === 'idle' && (
+                    {/* Loading state */}
+                    {status === 'loading' && (
                         <div className={styles.idleBox}>
-                            <div className={styles.idleIcon}>📊</div>
-                            <div className={styles.idleText}>Select a date range and click &quot;Fetch Analysis&quot; to view forecast accuracy data</div>
+                            <div style={{ fontSize: 20 }}>⏳ Loading performance data...</div>
                         </div>
                     )}
                 </div>

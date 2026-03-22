@@ -67,8 +67,9 @@ export default function ForecastPage() {
 
     function downloadCsv() {
         if (!forecast) return;
-        const rows = forecast.forecast_dates.map((d, i) => `${d},${forecast.forecasted_prices[i].toFixed(4)}`);
-        const csv = 'date,forecast_usd_lkr\n' + rows.join('\n');
+        const intervals = [forecast.t1, forecast.t2, forecast.t3, forecast.t4, forecast.t5];
+        const rows = forecast.forecast_dates.map((d, i) => `${d},${intervals[i].median.toFixed(4)},${intervals[i].lower.toFixed(4)},${intervals[i].upper.toFixed(4)}`);
+        const csv = 'date,median_forecast,lower_bound_80pct,upper_bound_80pct\n' + rows.join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -176,7 +177,8 @@ export default function ForecastPage() {
                                         </thead>
                                         <tbody>
                                             {forecast.forecast_dates.map((d, i) => {
-                                                const price = forecast.forecasted_prices[i];
+                                                const intervals = [forecast.t1, forecast.t2, forecast.t3, forecast.t4, forecast.t5];
+                                                const price = intervals[i].median;
                                                 const chg = price - forecast.last_known_price;
                                                 const chgPct = (chg / forecast.last_known_price) * 100;
                                                 const isUp = chg >= 0;

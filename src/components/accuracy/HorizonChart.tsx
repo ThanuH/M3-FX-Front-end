@@ -11,12 +11,12 @@ import {
     Legend,
 } from 'recharts';
 import { format, parseISO } from 'date-fns';
-import type { HorizonAnalysisDataPoint } from '@/lib/types';
+import type { PerformanceResponse } from '@/lib/types';
 import styles from './HorizonChart.module.css';
+import { useState } from 'react';
 
 interface Props {
-    data: HorizonAnalysisDataPoint[];
-    horizon: 't1' | 't2' | 't3' | 't4' | 't5';
+    data: PerformanceResponse;
 }
 
 interface ChartPoint {
@@ -43,14 +43,25 @@ const CustomTooltip = ({ active, payload, label }: {
     );
 };
 
-export default function HorizonChart({ data, horizon }: Props) {
-    const forecastKey = `${horizon}_forecast` as const;
-    const actualKey = `${horizon}_actual` as const;
+export default function HorizonChart({ data }: Props) {
+    const [selectedHorizon, setSelectedHorizon] = useState<number>(1);
 
-    const chartData: ChartPoint[] = data.map(point => ({
+    // Get comparison data for selected horizon
+    const horizonData = data.records
+        .flatMap(record => 
+            record.comparisons
+                .filter(comp => comp.horizon === selectedHorizon)
+                .map(comp => ({
+                    ...comp,
+                    created_date: record.created_date,
+                }))
+        )
+        .sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime());
+
+    const chartData: ChartPoint[] = horizonData.map(point => ({
         date: format(parseISO(point.created_date), 'MMM dd'),
-        forecast: point[forecastKey] as number,
-        actual: point[actualKey] as number | null,
+        forecast: point.forecast_price.median,
+        actual: point.actual_price,
     }));
 
     const numericValues = chartData.flatMap(point => [point.forecast, point.actual])
@@ -69,82 +80,128 @@ export default function HorizonChart({ data, horizon }: Props) {
         return [min - padding, max + padding];
     })();
 
+    // Calculate error metrics for selected horizon
+    const errorMetrics = (() => {
+        const actuals = chartData.filter(p => p.actual !== null);
+        if (!actuals.length) return null;
+
+        const mae = actuals.reduce((sum, p) => sum + Math.abs(p.forecast! - p.actual!), 0) / actuals.length;
+        const mape = actuals.reduce((sum, p) => sum + Math.abs((p.forecast! - p.actual!) / p.actual!), 0) / actuals.length;
+
+        return { mae, mape };
+    })();
+
     return (
-        <div className={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height={380}>
-                <ComposedChart data={chartData} margin={{ left: 8, right: 20, top: 10, bottom: 0 }}>
-                    <defs>
-                        <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.18} />
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#ef4444" stopOpacity={0.18} />
-                            <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
-                        </linearGradient>
-                    </defs>
-
-                    <CartesianGrid stroke="#1a2540" strokeDasharray="3 6" vertical={false} />
-                    <XAxis
-                        dataKey="date"
-                        tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
-                        axisLine={false}
-                        tickLine={false}
-                        interval="preserveStartEnd"
-                    />
-                    <YAxis
-                        tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={62}
-                        domain={yDomain}
-                        tickFormatter={v => v.toFixed(0)}
-                        label={{
-                            value: 'LKR / USD',
-                            angle: -90,
-                            position: 'insideLeft',
-                            fill: '#475569',
-                            fontSize: 10,
-                            dx: -4,
+        <>
+            {/* Horizon selector */}
+            <div style={{ marginBottom: 24, display: 'flex', gap: 8 }}>
+                {[1, 2, 3, 4, 5].map(h => (
+                    <button
+                        key={h}
+                        onClick={() => setSelectedHorizon(h)}
+                        style={{
+                            padding: '8px 16px',
+                            borderRadius: 6,
+                            border: selectedHorizon === h ? '2px solid #8b5cf6' : '1px solid #1a2540',
+                            background: selectedHorizon === h ? 'rgba(139, 92, 246, 0.1)' : 'transparent',
+                            color: selectedHorizon === h ? '#8b5cf6' : '#64748b',
+                            cursor: 'pointer',
+                            fontWeight: selectedHorizon === h ? 600 : 400,
+                            fontSize: 12,
+                            transition: 'all 0.2s',
                         }}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend
-                        wrapperStyle={{ paddingTop: 20 }}
-                        iconType="line"
-                        formatter={(value) => (
-                            <span style={{ fontSize: 11, color: '#94a3b8' }}>
-                                {value === 'forecast' ? `${horizon.toUpperCase()} Forecast` : `${horizon.toUpperCase()} Actual`}
-                            </span>
-                        )}
-                    />
+                    >
+                        Horizon {h}
+                    </button>
+                ))}
+            </div>
 
-                    {/* Forecast line */}
-                    <Line
-                        type="monotone"
-                        dataKey="forecast"
-                        name="forecast"
-                        stroke="#3b82f6"
-                        strokeWidth={2.5}
-                        dot={false}
-                        activeDot={{ r: 4, fill: '#3b82f6' }}
-                        connectNulls={true}
-                    />
+            {/* Chart */}
+            <div className={styles.chartContainer}>
+                <ResponsiveContainer width="100%" height={380}>
+                    <ComposedChart data={chartData} margin={{ left: 8, right: 20, top: 10, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.18} />
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.18} />
+                                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
 
-                    {/* Actual line */}
-                    <Line
-                        type="monotone"
-                        dataKey="actual"
-                        name="actual"
-                        stroke="#ef4444"
-                        strokeWidth={2.5}
-                        strokeDasharray="5 4"
-                        dot={false}
-                        activeDot={{ r: 4, fill: '#ef4444' }}
-                        connectNulls={true}
-                    />
-                </ComposedChart>
-            </ResponsiveContainer>
-        </div>
+                        <CartesianGrid stroke="#1a2540" strokeDasharray="3 6" vertical={false} />
+                        <XAxis
+                            dataKey="date"
+                            tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+                            axisLine={false}
+                            tickLine={false}
+                            interval="preserveStartEnd"
+                        />
+                        <YAxis
+                            tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
+                            axisLine={false}
+                            tickLine={false}
+                            width={62}
+                            domain={yDomain}
+                            tickFormatter={v => v.toFixed(0)}
+                            label={{ value: 'LKR / USD', angle: -90, position: 'insideLeft', fill: '#475569', fontSize: 10, dx: -4 }}
+                        />
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend />
+
+                        {/* Forecast line */}
+                        <Line
+                            type="monotone"
+                            dataKey="forecast"
+                            name="Forecast (Median)"
+                            stroke="#3b82f6"
+                            strokeWidth={2.5}
+                            dot={{ fill: '#3b82f6', r: 4 }}
+                            activeDot={{ r: 6, fill: '#3b82f6' }}
+                            isAnimationActive={false}
+                        />
+
+                        {/* Actual line */}
+                        <Line
+                            type="monotone"
+                            dataKey="actual"
+                            name="Actual Price"
+                            stroke="#10b981"
+                            strokeWidth={2.5}
+                            dot={{ fill: '#10b981', r: 4 }}
+                            activeDot={{ r: 6, fill: '#10b981' }}
+                            connectNulls
+                            isAnimationActive={false}
+                        />
+                    </ComposedChart>
+                </ResponsiveContainer>
+            </div>
+
+            {/* Error metrics */}
+            {errorMetrics && (
+                <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                    <div style={{
+                        padding: 12,
+                        background: 'rgba(59, 130, 246, 0.05)',
+                        borderRadius: 6,
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                    }}>
+                        <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>Mean Absolute Error</div>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: '#3b82f6' }}>{errorMetrics.mae.toFixed(4)}</div>
+                    </div>
+                    <div style={{
+                        padding: 12,
+                        background: 'rgba(16, 185, 129, 0.05)',
+                        borderRadius: 6,
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                    }}>
+                        <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>Mean Absolute % Error</div>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: '#10b981' }}>{(errorMetrics.mape * 100).toFixed(2)}%</div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }

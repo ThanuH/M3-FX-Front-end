@@ -58,3 +58,53 @@
 .delta {
     margin-top: 2px;
 }
+
+.boundsContainer {
+    background: rgba(139, 92, 246, 0.05);
+    border-radius: 6px;
+    padding: 10px 8px;
+    margin: 12px 0;
+    border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.boundRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 11px;
+}
+
+.boundRow:not(:last-child) {
+    border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+.boundLabel {
+    color: var(--text-muted);
+    font-weight: 600;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.boundValue {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 11px;
+}
+
+.medianHighlight {
+    color: var(--blue-400);
+    font-weight: 700;
+}
+
+.range {
+    font-size: 9px;
+    color: var(--text-muted);
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}

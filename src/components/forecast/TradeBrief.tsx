@@ -16,11 +16,12 @@ function StatItem({ label, value, sub }: { label: string; value: string; sub?: R
 }
 
 export default function TradeBrief({ forecast }: Props) {
-    const { forecasted_prices, last_known_price } = forecast;
-    const lastFc = forecasted_prices[forecasted_prices.length - 1];
+    const { t1, t2, t3, t4, t5, last_known_price } = forecast;
+    const intervals = [t1, t2, t3, t4, t5];
+    const lastFc = intervals[4].median;
     const totalChg = lastFc - last_known_price;
     const totalChgPct = (totalChg / last_known_price) * 100;
-    const avgFc = forecasted_prices.reduce((a, b) => a + b, 0) / forecasted_prices.length;
+    const avgFc = intervals.reduce((a, b) => a + (b.median || 0), 0) / intervals.length;
     const isUp = totalChg >= 0;
 
     return (

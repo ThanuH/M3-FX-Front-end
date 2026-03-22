@@ -8,6 +8,7 @@ import type {
     MacroIndicatorsResponse,
     HorizonAnalysisResponse,
     ForecastExplanationResponse,
+    PerformanceResponse,
 } from './types';
 
 const BACKEND = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:7860';
@@ -54,6 +55,10 @@ export async function getMacroData(limit = 500): Promise<MacroIndicatorsResponse
 
 export async function getHorizonAnalysis(fromDate: string, toDate: string): Promise<HorizonAnalysisResponse> {
     return apiFetch<HorizonAnalysisResponse>(`/forecast/horizon-analysis?from_date=${fromDate}&to_date=${toDate}`);
+}
+
+export async function getPredictPerformance(limit = 100): Promise<PerformanceResponse> {
+    return apiFetch<PerformanceResponse>(`/predict/performance?limit=${limit}`);
 }
 
 export async function getForecastExplanation(date: string): Promise<ForecastExplanationResponse> {
