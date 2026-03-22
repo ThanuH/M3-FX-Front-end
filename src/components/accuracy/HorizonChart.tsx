@@ -53,6 +53,22 @@ export default function HorizonChart({ data, horizon }: Props) {
         actual: point[actualKey] as number | null,
     }));
 
+    const numericValues = chartData.flatMap(point => [point.forecast, point.actual])
+        .filter((value): value is number => value !== null && Number.isFinite(value));
+
+    const yDomain: [number, number] | ['auto', 'auto'] = (() => {
+        if (!numericValues.length) {
+            return ['auto', 'auto'];
+        }
+
+        const min = Math.min(...numericValues);
+        const max = Math.max(...numericValues);
+        const spread = max - min;
+        const padding = Math.max(spread * 0.22, 0.35);
+
+        return [min - padding, max + padding];
+    })();
+
     return (
         <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height={380}>
@@ -81,7 +97,7 @@ export default function HorizonChart({ data, horizon }: Props) {
                         axisLine={false}
                         tickLine={false}
                         width={62}
-                        domain={['auto', 'auto']}
+                        domain={yDomain}
                         tickFormatter={v => v.toFixed(0)}
                         label={{
                             value: 'LKR / USD',
