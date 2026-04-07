@@ -21,40 +21,44 @@ interface Props {
 interface ChartPoint {
     date: string;
     historical?: number;
-    medianForecast?: number;
-    lowerBound?: number;
-    upperBound?: number;
     bridge?: number;
-}
-
-// Custom dot for median forecast markers
-function MedianDot(props: {
-    cx?: number; cy?: number; payload?: ChartPoint;
-}) {
-    const { cx, cy, payload } = props;
-    if (!payload?.medianForecast || cx === undefined || cy === undefined) return null;
-    return (
-        <g>
-            <circle cx={cx} cy={cy} r={5} fill="#8b5cf6" stroke="#fff" strokeWidth={1.5} />
-            <circle cx={cx} cy={cy} r={9} fill="rgba(139,92,246,0.1)" />
-        </g>
-    );
+    candleOpen?: number;
+    candleClose?: number;
+    candleHigh?: number;
+    candleLow?: number;
 }
 
 const CustomTooltip = ({ active, payload, label }: {
     active?: boolean;
-    payload?: Array<{ name: string; value: number; color: string; dataKey: string }>;
+    payload?: Array<{
+        name: string;
+        value: number;
+        color: string;
+        dataKey: string;
+        payload?: ChartPoint;
+    }>;
     label?: string;
 }) => {
     if (!active || !payload?.length) return null;
-    
-    // Filter to show only relevant data
-    const visibleItems = payload.filter(p => 
-        p.dataKey === 'historical' || 
-        p.dataKey === 'medianForecast' || 
-        p.dataKey === 'lowerBound' || 
-        p.dataKey === 'upperBound'
-    );
+
+    const point = payload[0]?.payload;
+    const rows: Array<{ label: string; value: number; color: string }> = [];
+
+    if (typeof point?.historical === 'number') {
+        rows.push({ label: 'Historical', value: point.historical, color: '#22c55e' });
+    }
+    if (typeof point?.candleOpen === 'number') {
+        rows.push({ label: 'Open', value: point.candleOpen, color: '#60a5fa' });
+    }
+    if (typeof point?.candleClose === 'number') {
+        rows.push({ label: 'Close (Median)', value: point.candleClose, color: '#8b5cf6' });
+    }
+    if (typeof point?.candleHigh === 'number') {
+        rows.push({ label: 'High (Upper)', value: point.candleHigh, color: '#a78bfa' });
+    }
+    if (typeof point?.candleLow === 'number') {
+        rows.push({ label: 'Low (Lower)', value: point.candleLow, color: '#f472b6' });
+    }
     
     return (
         <div style={{
@@ -66,18 +70,16 @@ const CustomTooltip = ({ active, payload, label }: {
             fontSize: 12,
         }}>
             <div style={{ color: '#64748b', marginBottom: 6, fontSize: 10 }}>{label}</div>
-            {visibleItems.map(p => {
-                let displayName = p.name;
-                if (p.dataKey === 'medianForecast') displayName = 'Median Forecast';
-                if (p.dataKey === 'lowerBound') displayName = 'Lower Bound (80%)';
-                if (p.dataKey === 'upperBound') displayName = 'Upper Bound (80%)';
-                
+            {rows.map(row => {
                 return (
-                    <div key={p.dataKey} style={{ color: p.color }}>
-                        {displayName}: <strong>{p.value?.toFixed(4)}</strong>
+                    <div key={row.label} style={{ color: row.color }}>
+                        {row.label}: <strong>{row.value.toFixed(4)}</strong>
                     </div>
                 );
             })}
+            {rows.length === 0 && (
+                <div style={{ color: '#94a3b8' }}>No value for this point</div>
+            )}
         </div>
     );
 };
@@ -112,18 +114,44 @@ export default function ForecastChart({ history, forecast }: Props) {
         chartData = [
             ...histPoints.slice(0, -1),
             bridgePt,
-            ...forecast.forecast_dates.map((d, i) => ({
-                date: format(parseISO(d), 'MMM dd'),
-                medianForecast: intervals[i].median,
-                lowerBound: intervals[i].lower,
-                upperBound: intervals[i].upper,
-                bridge: i === 0 ? intervals[i].median : undefined,
-            })),
+            ...forecast.forecast_dates.map((d, i) => {
+                const prevClose = i === 0 ? forecast.last_known_price : intervals[i - 1].median;
+                const close = intervals[i].median;
+                return {
+                    date: format(parseISO(d), 'MMM dd'),
+                    candleOpen: prevClose,
+                    candleClose: close,
+                    candleHigh: intervals[i].upper,
+                    candleLow: intervals[i].lower,
+                    bridge: i === 0 ? close : undefined,
+                };
+            }),
         ];
     }
 
+    // Calculate a stable Y domain with a small padding.
+    const allValues = chartData.flatMap(p => [
+        p.historical,
+        p.candleOpen,
+        p.candleClose,
+        p.candleHigh,
+        p.candleLow,
+    ])
+        .filter((v): v is number => typeof v === 'number' && isFinite(v));
+    
+    const yDomain: [number, number] | ['auto', 'auto'] = (() => {
+        if (!allValues.length) return ['auto', 'auto'];
+        
+        const min = Math.min(...allValues);
+        const max = Math.max(...allValues);
+        const spread = max - min;
+        const padding = Math.max(spread * 0.1, 0.1);
+        return [min - padding, max + padding];
+    })();
+
     return (
-        <ResponsiveContainer width="100%" height={420}>
+        <>
+            <ResponsiveContainer width="100%" height={420}>
             <ComposedChart data={chartData} margin={{ left: 8, right: 20, top: 10, bottom: 0 }}>
                 <defs>
                     <linearGradient id="histGrad" x1="0" y1="0" x2="0" y2="1">
@@ -152,8 +180,9 @@ export default function ForecastChart({ history, forecast }: Props) {
                     axisLine={false}
                     tickLine={false}
                     width={62}
-                    domain={['auto', 'auto']}
-                    tickFormatter={v => v.toFixed(0)}
+                    domain={yDomain}
+                    allowDataOverflow
+                    tickFormatter={v => v.toFixed(2)}
                     label={{ value: 'LKR / USD', angle: -90, position: 'insideLeft', fill: '#475569', fontSize: 10, dx: -4 }}
                 />
                 <Tooltip content={<CustomTooltip />} />
@@ -183,50 +212,48 @@ export default function ForecastChart({ history, forecast }: Props) {
                     isAnimationActive={false}
                 />
 
-                {/* Fan Chart - Upper Confidence Band */}
+                {/* Hidden lines so tooltip includes OHLC values for forecast points */}
                 {forecast && (
-                    <Area
-                        type="monotone"
-                        dataKey="upperBound"
-                        name="Upper Bound (80% CI)"
-                        stroke="#a78bfa"
-                        strokeWidth={1.5}
-                        strokeOpacity={0.6}
-                        fill="url(#upperBandGrad)"
-                        dot={false}
-                        isAnimationActive={false}
-                    />
+                    <>
+                        <Line dataKey="candleOpen" name="Open" stroke="transparent" dot={false} activeDot={false} legendType="none" isAnimationActive={false} />
+                        <Line dataKey="candleClose" name="Close" stroke="transparent" dot={false} activeDot={false} legendType="none" isAnimationActive={false} />
+                        <Line dataKey="candleHigh" name="High" stroke="transparent" dot={false} activeDot={false} legendType="none" isAnimationActive={false} />
+                        <Line dataKey="candleLow" name="Low" stroke="transparent" dot={false} activeDot={false} legendType="none" isAnimationActive={false} />
+                    </>
                 )}
 
-                {/* Fan Chart - Lower Confidence Band */}
-                {forecast && (
-                    <Area
-                        type="monotone"
-                        dataKey="lowerBound"
-                        name="Lower Bound (80% CI)"
-                        stroke="#a78bfa"
-                        strokeWidth={1.5}
-                        strokeOpacity={0.6}
-                        fill="url(#lowerBandGrad)"
-                        dot={false}
-                        isAnimationActive={false}
-                    />
-                )}
+                {/* Forecast candlesticks (wick + body) */}
+                {forecast && forecast.forecast_dates.map((d, i) => {
+                    const dateLabel = format(parseISO(d), 'MMM dd');
+                    const interval = [forecast.t1, forecast.t2, forecast.t3, forecast.t4, forecast.t5][i];
+                    const open = i === 0 ? forecast.last_known_price : [forecast.t1, forecast.t2, forecast.t3, forecast.t4, forecast.t5][i - 1].median;
+                    const close = interval.median;
+                    const bullish = close >= open;
+                    const candleColor = bullish ? '#22c55e' : '#ef4444';
 
-                {/* Median Forecast Line - on top */}
-                {forecast && (
-                    <Line
-                        type="monotone"
-                        dataKey="medianForecast"
-                        name="Median Forecast"
-                        stroke="#8b5cf6"
-                        strokeWidth={3}
-                        strokeDasharray="6 3"
-                        dot={<MedianDot />}
-                        activeDot={{ r: 6, fill: '#8b5cf6' }}
-                        isAnimationActive={false}
-                    />
-                )}
+                    return (
+                        <>
+                            <ReferenceLine
+                                key={`${dateLabel}-wick`}
+                                segment={[
+                                    { x: dateLabel, y: interval.lower },
+                                    { x: dateLabel, y: interval.upper },
+                                ]}
+                                stroke={candleColor}
+                                strokeWidth={2}
+                            />
+                            <ReferenceLine
+                                key={`${dateLabel}-body`}
+                                segment={[
+                                    { x: dateLabel, y: open },
+                                    { x: dateLabel, y: close },
+                                ]}
+                                stroke={candleColor}
+                                strokeWidth={8}
+                            />
+                        </>
+                    );
+                })}
 
                 {/* Reference line at last known price */}
                 {forecast && (
@@ -238,6 +265,7 @@ export default function ForecastChart({ history, forecast }: Props) {
                     />
                 )}
             </ComposedChart>
-        </ResponsiveContainer>
+            </ResponsiveContainer>
+        </>
     );
 }

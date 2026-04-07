@@ -13,7 +13,7 @@ export default function DayCards({ forecast }: Props) {
     return (
         <div className={styles.grid}>
             {forecast_dates.map((date, i) => {
-                const { lower, median, upper } = intervals[i];
+                const { lower, upper } = intervals[i];
 
                 return (
                     <div key={date} className={styles.card}>
@@ -25,10 +25,6 @@ export default function DayCards({ forecast }: Props) {
                             <div className={styles.boundRow}>
                                 <div className={styles.boundLabel}>Lower</div>
                                 <div className={styles.boundValue}>{lower.toFixed(2)}</div>
-                            </div>
-                            <div className={styles.boundRow}>
-                                <div className={styles.boundLabel}>Median</div>
-                                <div className={`${styles.boundValue} ${styles.medianHighlight}`}>{median.toFixed(2)}</div>
                             </div>
                             <div className={styles.boundRow}>
                                 <div className={styles.boundLabel}>Upper</div>
