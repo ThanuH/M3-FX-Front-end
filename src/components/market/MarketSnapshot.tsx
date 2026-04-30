@@ -1,5 +1,15 @@
 import type { MarketStats } from '@/lib/types';
 import styles from './MarketSnapshot.module.css';
+import {
+    Radio,
+    ArrowLeftRight,
+    CalendarDays,
+    CalendarRange,
+    Globe,
+    TrendingUp,
+    Flame,
+    Brain,
+} from 'lucide-react';
 
 interface Props {
     stats: MarketStats | null;
@@ -45,7 +55,7 @@ export default function MarketSnapshot({ stats }: Props) {
                         <div className="section-label">Market Snapshot</div>
                     </div>
                     <div className="empty-state">
-                        <div className="empty-icon">📡</div>
+                        <div className="empty-icon"><Radio size={32} strokeWidth={1.5} /></div>
                         <p>Connecting to market data…</p>
                     </div>
                 </div>
@@ -78,19 +88,19 @@ export default function MarketSnapshot({ stats }: Props) {
                 <p className="group-label">FX Rates &amp; Momentum</p>
                 <div className={`cards-4 ${styles.group}`}>
                     <MetricCard
-                        label="💱 USD / LKR Spot"
+                        label={<><ArrowLeftRight size={12} style={{display:'inline',marginRight:4}} strokeWidth={1.5} />USD / LKR Spot</>}
                         value={fmt(currentRate)}
                         type={dailyChangePct >= 0 ? 'up' : 'down'}
                         badge={<Badge value={dailyChangePct} />}
                     />
                     <MetricCard
-                        label="📅 Daily Change"
+                        label={<><CalendarDays size={12} style={{display:'inline',marginRight:4}} strokeWidth={1.5} />Daily Change</>}
                         value={`${dailyChange >= 0 ? '+' : ''}${fmt(dailyChange)}`}
                         type={dailyChange >= 0 ? 'up' : 'down'}
                         badge={<Badge value={dailyChangePct} />}
                     />
                     <MetricCard
-                        label="📆 Weekly Change"
+                        label={<><CalendarRange size={12} style={{display:'inline',marginRight:4}} strokeWidth={1.5} />Weekly Change</>}
                         value={`${weeklyChange >= 0 ? '+' : ''}${fmt(weeklyChange)}`}
                         type={weeklyChange >= 0 ? 'up' : 'down'}
                         badge={<Badge value={weeklyChangePct} />}
@@ -107,25 +117,25 @@ export default function MarketSnapshot({ stats }: Props) {
                 <p className="group-label" style={{ marginTop: 24 }}>Macro Indicators</p>
                 <div className={`cards-4 ${styles.group}`}>
                     <MetricCard
-                        label="🌍 DXY Index"
+                        label={<><Globe size={12} style={{display:'inline',marginRight:4}} strokeWidth={1.5} />DXY Index</>}
                         value={fmt(dxy)}
                         type="neutral"
                         badge={<div className="badge badge-neutral">Dollar Index</div>}
                     />
                     <MetricCard
-                        label="📊 GDP Growth"
+                        label={<><TrendingUp size={12} style={{display:'inline',marginRight:4}} strokeWidth={1.5} />GDP Growth</>}
                         value={`${fmt(gdpGrowth)}%`}
                         type={gdpGrowth >= 0 ? 'up' : 'down'}
                         badge={<Badge value={gdpGrowth} />}
                     />
                     <MetricCard
-                        label="🔥 Inflation Rate"
+                        label={<><Flame size={12} style={{display:'inline',marginRight:4}} strokeWidth={1.5} />Inflation Rate</>}
                         value={`${fmt(inflation)}%`}
                         type={inflationType}
                         badge={<div className={`badge ${inflationType === 'down' ? 'badge-down' : 'badge-neutral'}`}>{inflation > 5 ? 'Elevated' : 'Moderate'}</div>}
                     />
                     <MetricCard
-                        label="🧠 Sentiment Score"
+                        label={<><Brain size={12} style={{display:'inline',marginRight:4}} strokeWidth={1.5} />Sentiment Score</>}
                         value={sentiment.toFixed(4)}
                         type={sentimentType as 'up' | 'down' | 'neutral'}
                         badge={<div className={`badge badge-${sentimentType}`}>{sentimentLabel}</div>}

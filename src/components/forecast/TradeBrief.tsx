@@ -1,5 +1,6 @@
 import type { ForecastResponse } from '@/lib/types';
 import styles from './TradeBrief.module.css';
+import { TrendingUp } from 'lucide-react';
 
 interface Props {
     forecast: ForecastResponse;
@@ -26,7 +27,7 @@ export default function TradeBrief({ forecast }: Props) {
 
     return (
         <div className={styles.wrap}>
-            <p className={styles.heading}>📈 Trade Brief</p>
+            <p className={styles.heading}><TrendingUp size={14} style={{display:'inline',marginRight:6}} strokeWidth={1.5} />Trade Brief</p>
             <div className="cards-2">
                 <StatItem label="Current Rate" value={last_known_price.toFixed(4)} />
                 <StatItem label="Day 5 Target" value={lastFc.toFixed(4)} />

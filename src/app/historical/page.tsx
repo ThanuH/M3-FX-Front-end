@@ -5,6 +5,7 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import type { MacroIndicatorsResponse } from '@/lib/types';
 import styles from './page.module.css';
+import { BarChart3, Download, Table2 } from 'lucide-react';
 
 const MacroChart = dynamic(() => import('@/components/historical/MacroChart'), { ssr: false });
 
@@ -139,7 +140,7 @@ export default function HistoricalPage() {
                         </div>
                     </div>
                 </div>
-                <div className={styles.headerBadge}>📊 12 Indicators · Monthly Series</div>
+                <div className={styles.headerBadge}><BarChart3 size={12} style={{display:'inline',marginRight:5}} strokeWidth={1.5} />12 Indicators · Monthly Series</div>
             </div>
 
             <section className="section">
@@ -155,7 +156,7 @@ export default function HistoricalPage() {
                     {status === 'done' && (
                         <div className={styles.controls}>
                             <button className="btn-ghost" onClick={downloadCsv} disabled={!selectedCol}>
-                                📥 Download CSV
+                                <Download size={14} style={{display:'inline',marginRight:6}} />Download CSV
                             </button>
                             <div className={styles.tip}>
                                 Monthly macro series from CBSL &amp; World Bank feeds.
@@ -266,7 +267,7 @@ export default function HistoricalPage() {
                             {selectedCol && (
                                 <div style={{ marginTop: 32 }}>
                                     <p className={styles.tableHeading}>
-                                        📋 Data Records — {friendlyLabel(selectedCol)}
+                                        <Table2 size={13} style={{display:'inline',marginRight:6}} strokeWidth={1.5} />Data Records — {friendlyLabel(selectedCol)}
                                     </p>
                                     <div className={styles.tableScroll}>
                                         <table className={styles.table}>

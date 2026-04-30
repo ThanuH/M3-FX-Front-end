@@ -10,8 +10,10 @@ import DayCards from '@/components/forecast/DayCards';
 import TradeBrief from '@/components/forecast/TradeBrief';
 import ForecastExplanation from '@/components/forecast/ForecastExplanation';
 import styles from './page.module.css';
+import { Download, RefreshCw, Table2, Radio } from 'lucide-react';
 
 const ForecastChart = dynamic(() => import('@/components/forecast/ForecastChart'), { ssr: false });
+const ForecastBandChart = dynamic(() => import('@/components/forecast/ForecastBandChart'), { ssr: false });
 
 type Status = 'idle' | 'loading' | 'done' | 'error';
 
@@ -117,8 +119,8 @@ export default function ForecastPage() {
 
                         {status === 'done' && (
                             <>
-                                <button className="btn-ghost" onClick={downloadCsv}>📥 Download CSV</button>
-                                <button className="btn-ghost" onClick={reset}>🔄 New Forecast</button>
+                                <button className="btn-ghost" onClick={downloadCsv}><Download size={14} style={{display:'inline',marginRight:6}} />Download CSV</button>
+                                <button className="btn-ghost" onClick={reset}><RefreshCw size={14} style={{display:'inline',marginRight:6}} />New Forecast</button>
                             </>
                         )}
 
@@ -161,11 +163,24 @@ export default function ForecastPage() {
                                 <DayCards forecast={forecast} />
                             </div>
 
+                            {/* 5-Day Forecast Band Chart */}
+                            <div style={{ marginTop: 32 }}>
+                                <p className="group-label" style={{ marginBottom: 12 }}>5-Day Forecast · Confidence Band</p>
+                                <div style={{
+                                    background: 'rgba(15,23,42,0.6)',
+                                    border: '1px solid #1a2540',
+                                    borderRadius: 12,
+                                    padding: '16px 8px 8px',
+                                }}>
+                                    <ForecastBandChart forecast={forecast} />
+                                </div>
+                            </div>
+
                             {/* Details table + Trade Brief */}
                             <div className={styles.detailsRow}>
                                 {/* Table */}
                                 <div className={styles.tableWrap}>
-                                    <p className={styles.tableHeading}>📋 Forecast Details</p>
+                                    <p className={styles.tableHeading}><Table2 size={13} style={{display:'inline',marginRight:6}} strokeWidth={1.5} />Forecast Details</p>
                                     <table className={styles.table}>
                                         <thead>
                                             <tr>
@@ -213,7 +228,7 @@ export default function ForecastPage() {
                     {/* Idle */}
                     {status === 'idle' && (
                         <div className="empty-state" style={{ marginTop: 32 }}>
-                            <div className="empty-icon">📡</div>
+                            <div className="empty-icon"><Radio size={32} strokeWidth={1.5} /></div>
                             <p>Click <strong>Generate Forecast</strong> above to run the 5-day LSTM prediction model.</p>
                         </div>
                     )}

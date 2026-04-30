@@ -2,6 +2,7 @@ import { getNews } from '@/lib/api';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import styles from './page.module.css';
+import { Rss, Radio } from 'lucide-react';
 
 export const metadata = {
     title: 'M3-FX | Market News',
@@ -29,7 +30,7 @@ export default async function NewsPage() {
                         <div className={styles.headerSub}>Live headlines &nbsp;·&nbsp; Economy Next &nbsp;·&nbsp; USD / LKR</div>
                     </div>
                 </div>
-                <div className={styles.headerBadge}>📰 {headlines.length} Headlines</div>
+                <div className={styles.headerBadge}><Rss size={12} style={{display:'inline',marginRight:5}} />{headlines.length} Headlines</div>
             </div>
 
             <section className="section">
@@ -41,7 +42,7 @@ export default async function NewsPage() {
 
                     {headlines.length === 0 ? (
                         <div className="empty-state">
-                            <div className="empty-icon">📡</div>
+                            <div className="empty-icon"><Radio size={32} strokeWidth={1.5} /></div>
                             <p>Could not load headlines. Make sure the backend is running at <strong>localhost:7860</strong></p>
                         </div>
                     ) : (

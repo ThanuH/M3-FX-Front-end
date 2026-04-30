@@ -7,11 +7,7 @@ import NewsTicker from './NewsTicker';
 
 const GlobeCanvas = dynamic(() => import('./GlobeCanvas'), { ssr: false });
 
-interface Props {
-    isMarketOpen: boolean;
-}
-
-export default function HeroSection({ isMarketOpen }: Props) {
+export default function HeroSection() {
     return (
         <section className={styles.hero}>
             {/* Grid overlay */}
@@ -36,7 +32,7 @@ export default function HeroSection({ isMarketOpen }: Props) {
                 {/* Stats row */}
                 <div className={styles.stats}>
                     <div className={styles.stat}>
-                        <div className={styles.statVal}>13</div>
+                        <div className={styles.statVal}>23</div>
                         <div className={styles.statLbl}>Features</div>
                     </div>
                     <div className={styles.statSep} />
@@ -48,13 +44,6 @@ export default function HeroSection({ isMarketOpen }: Props) {
                     <div className={styles.stat}>
                         <div className={styles.statVal}>5d</div>
                         <div className={styles.statLbl}>Horizon</div>
-                    </div>
-                    <div className={styles.statSep} />
-                    <div className={styles.stat}>
-                        <div className={`${styles.statVal} ${isMarketOpen ? styles.statOpen : styles.statClosed}`}>
-                            {isMarketOpen ? 'OPEN' : 'CLOSED'}
-                        </div>
-                        <div className={styles.statLbl}>LKR Market</div>
                     </div>
                 </div>
 
