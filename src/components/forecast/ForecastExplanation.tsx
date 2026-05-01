@@ -34,11 +34,9 @@ export default function ForecastExplanation({ explanation }: Props) {
                                     <span className={styles.price}>{item.predicted_price.toFixed(4)}</span>
                                 </div>
                                 <div className={styles.badge}>
-                                    {item.source === 'database'
-                                        ? <><DatabaseZap size={11} style={{ display: 'inline', marginRight: 4 }} />From Database</>
-                                        : item.source === 'fallback'
-                                            ? <><DatabaseZap size={11} style={{ display: 'inline', marginRight: 4 }} />Fallback</>
-                                            : <><Sparkles size={11} style={{ display: 'inline', marginRight: 4 }} />AI Generated</>}
+                                    {item.source === 'cache'
+                                        ? <><DatabaseZap size={11} style={{ display: 'inline', marginRight: 4 }} />Cached</>
+                                        : <><Sparkles size={11} style={{ display: 'inline', marginRight: 4 }} />AI Generated</>}
                                 </div>
                                 <p className={styles.explanation}>{item.explanation}</p>
                             </div>
