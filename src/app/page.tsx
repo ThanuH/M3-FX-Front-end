@@ -4,12 +4,6 @@ import HeroSection from '@/components/hero/HeroSection';
 import MarketSnapshot from '@/components/market/MarketSnapshot';
 import HowItWorks from '@/components/howItWorks/HowItWorks';
 
-function computeMarketStatus(): boolean {
-  const now = new Date();
-  const hour = now.getHours();
-  const day = now.getDay();
-  return day >= 1 && day <= 5 && hour >= 9 && hour < 17;
-}
 
 async function fetchPageData(): Promise<{ stats: MarketStats | null }> {
   try {
@@ -37,11 +31,9 @@ async function fetchPageData(): Promise<{ stats: MarketStats | null }> {
 
 export default async function Home() {
   const { stats } = await fetchPageData();
-  const isOpen = computeMarketStatus();
-
   return (
     <>
-      <HeroSection isMarketOpen={isOpen} />
+      <HeroSection />
       <MarketSnapshot stats={stats} />
       <HowItWorks />
     </>

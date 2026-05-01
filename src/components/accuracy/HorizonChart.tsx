@@ -2,6 +2,7 @@
 
 import {
     ComposedChart,
+    Area,
     Line,
     XAxis,
     YAxis,
@@ -24,18 +25,18 @@ interface ChartPoint {
     date: string;
     actual: number | null;
     forecastMedian: number;
-    candleOpen: number;
-    candleClose: number;
-    candleHigh: number;
-    candleLow: number;
+    forecastUpper: number;
+    forecastLower: number;
+    confidenceBand: [number, number];
 }
 
 const CustomTooltip = ({ active, payload, label }: {
     active?: boolean;
     payload?: Array<{
         name: string;
-        value: number | null;
+        value: number | number[] | null;
         color: string;
+        dataKey: string;
         payload?: ChartPoint;
     }>;
     label?: string;
@@ -43,29 +44,30 @@ const CustomTooltip = ({ active, payload, label }: {
     if (!active || !payload?.length) return null;
 
     const point = payload[0]?.payload;
-    const rows: Array<{ label: string; value: number; color: string }> = [];
-
-    if (typeof point?.actual === 'number') {
-        rows.push({ label: 'Actual Price', value: point.actual, color: '#10b981' });
-    }
-    if (typeof point?.forecastMedian === 'number') {
-        rows.push({ label: 'Predicted Median', value: point.forecastMedian, color: '#3b82f6' });
-    }
-    if (typeof point?.candleHigh === 'number') {
-        rows.push({ label: 'Upper Bound (80%)', value: point.candleHigh, color: '#f59e0b' });
-    }
-    if (typeof point?.candleLow === 'number') {
-        rows.push({ label: 'Lower Bound (80%)', value: point.candleLow, color: '#22d3ee' });
-    }
 
     return (
         <div className={styles.tooltip}>
             <div className={styles.tooltipLabel}>{label}</div>
-            {rows.map(row => (
-                <div key={row.label} className={styles.tooltipRow} style={{ color: row.color }}>
-                    {row.label}: <strong>{row.value.toFixed(4)}</strong>
+            {typeof point?.actual === 'number' && (
+                <div className={styles.tooltipRow} style={{ color: '#10b981' }}>
+                    Actual Price: <strong>{point.actual.toFixed(4)}</strong>
                 </div>
-            ))}
+            )}
+            {typeof point?.forecastMedian === 'number' && (
+                <div className={styles.tooltipRow} style={{ color: '#8b5cf6' }}>
+                    Predicted Median: <strong>{point.forecastMedian.toFixed(4)}</strong>
+                </div>
+            )}
+            {typeof point?.forecastUpper === 'number' && (
+                <div className={styles.tooltipRow} style={{ color: '#f59e0b' }}>
+                    Upper Bound (80%): <strong>{point.forecastUpper.toFixed(4)}</strong>
+                </div>
+            )}
+            {typeof point?.forecastLower === 'number' && (
+                <div className={styles.tooltipRow} style={{ color: '#22d3ee' }}>
+                    Lower Bound (80%): <strong>{point.forecastLower.toFixed(4)}</strong>
+                </div>
+            )}
         </div>
     );
 };
@@ -73,7 +75,7 @@ const CustomTooltip = ({ active, payload, label }: {
 export default function HorizonChart({ data }: Props) {
     const [selectedHorizon, setSelectedHorizon] = useState<number>(1);
 
-    // Get comparison data for selected horizon
+    // Get comparison data for selected horizon, sorted by forecast_date
     const horizonData = data.records
         .flatMap(record =>
             record.comparisons
@@ -83,56 +85,46 @@ export default function HorizonChart({ data }: Props) {
                     created_date: record.created_date,
                 }))
         )
-        .sort((a, b) => new Date(a.created_date).getTime() - new Date(b.created_date).getTime());
+        .sort((a, b) => new Date(a.forecast_date).getTime() - new Date(b.forecast_date).getTime());
 
-    const chartData: ChartPoint[] = horizonData.map((point, idx) => {
-        const previousMedian = idx === 0
-            ? point.forecast_price.median
-            : horizonData[idx - 1].forecast_price.median;
+    const chartData: ChartPoint[] = horizonData.map(point => ({
+        date: format(parseISO(point.forecast_date), 'MMM dd'),
+        actual: point.actual_price,
+        forecastMedian: point.forecast_price.median,
+        forecastUpper: point.forecast_price.upper,
+        forecastLower: point.forecast_price.lower,
+        confidenceBand: [point.forecast_price.lower, point.forecast_price.upper],
+    }));
 
-        return {
-            date: format(parseISO(point.created_date), 'MMM dd'),
-            actual: point.actual_price,
-            forecastMedian: point.forecast_price.median,
-            candleOpen: previousMedian,
-            candleClose: point.forecast_price.median,
-            candleHigh: point.forecast_price.upper,
-            candleLow: point.forecast_price.lower,
-        };
-    });
-
-    const numericValues = chartData.flatMap(point => [
-        point.actual,
-        point.candleOpen,
-        point.candleClose,
-        point.candleHigh,
-        point.candleLow,
-    ])
-        .filter((value): value is number => value !== null && Number.isFinite(value));
+    const allValues = chartData.flatMap(p => [
+        p.actual,
+        p.forecastMedian,
+        p.forecastUpper,
+        p.forecastLower,
+    ]).filter((v): v is number => v !== null && Number.isFinite(v));
 
     const yDomain: [number, number] | ['auto', 'auto'] = (() => {
-        if (!numericValues.length) {
-            return ['auto', 'auto'];
-        }
-
-        const min = Math.min(...numericValues);
-        const max = Math.max(...numericValues);
+        if (!allValues.length) return ['auto', 'auto'];
+        const min = Math.min(...allValues);
+        const max = Math.max(...allValues);
         const spread = max - min;
-        const padding = Math.max(spread * 0.22, 0.35);
-
+        const padding = Math.max(spread * 0.2, 0.3);
         return [min - padding, max + padding];
     })();
 
-    // Calculate error metrics for selected horizon
+    // Error metrics
     const errorMetrics = (() => {
         const actuals = chartData.filter(p => p.actual !== null);
         if (!actuals.length) return null;
-
         const mae = actuals.reduce((sum, p) => sum + Math.abs(p.forecastMedian - p.actual!), 0) / actuals.length;
         const mape = actuals.reduce((sum, p) => sum + Math.abs((p.forecastMedian - p.actual!) / p.actual!), 0) / actuals.length;
-
         return { mae, mape };
     })();
+
+    // Average last-known price for reference line
+    const avgMedian = chartData.length
+        ? chartData.reduce((s, p) => s + p.forecastMedian, 0) / chartData.length
+        : null;
 
     return (
         <>
@@ -164,13 +156,18 @@ export default function HorizonChart({ data }: Props) {
                 <ResponsiveContainer width="100%" height={380}>
                     <ComposedChart data={chartData} margin={{ left: 8, right: 20, top: 10, bottom: 0 }}>
                         <defs>
-                            <linearGradient id="actualGrad" x1="0" y1="0" x2="0" y2="1">
+                            <linearGradient id="actualGradH" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.18} />
                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="bandGradH" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.05} />
                             </linearGradient>
                         </defs>
 
                         <CartesianGrid stroke="#1a2540" strokeDasharray="3 6" vertical={false} />
+
                         <XAxis
                             dataKey="date"
                             tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
@@ -184,84 +181,89 @@ export default function HorizonChart({ data }: Props) {
                             tickLine={false}
                             width={62}
                             domain={yDomain}
-                            tickFormatter={v => v.toFixed(0)}
+                            allowDataOverflow
+                            tickFormatter={v => v.toFixed(2)}
                             label={{ value: 'LKR / USD', angle: -90, position: 'insideLeft', fill: '#475569', fontSize: 10, dx: -4 }}
                         />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend />
 
-                        {/* Hidden line keeps predicted series in legend */}
+                        <Tooltip content={<CustomTooltip />} />
+                        <Legend formatter={(value) => (
+                            <span style={{ color: '#94a3b8', fontSize: 11 }}>{value}</span>
+                        )} />
+
+                        {/* Average median reference */}
+                        {avgMedian !== null && (
+                            <ReferenceLine
+                                y={avgMedian}
+                                stroke="#475569"
+                                strokeDasharray="5 5"
+                                strokeWidth={1}
+                                label={{ value: 'Avg Predicted', position: 'insideTopRight', fill: '#475569', fontSize: 9 }}
+                            />
+                        )}
+
+                        {/* 80% Confidence Band */}
+                        <Area
+                            type="monotone"
+                            dataKey="confidenceBand"
+                            name="80% Confidence Band"
+                            stroke="none"
+                            fill="url(#bandGradH)"
+                            connectNulls
+                            isAnimationActive={false}
+                            legendType="rect"
+                        />
+
+                        {/* Upper Bound dashed amber */}
+                        <Line
+                            type="monotone"
+                            dataKey="forecastUpper"
+                            name="Upper Bound (80%)"
+                            stroke="#f59e0b"
+                            strokeWidth={1.5}
+                            strokeDasharray="4 3"
+                            dot={false}
+                            activeDot={{ r: 4, fill: '#f59e0b' }}
+                            connectNulls
+                            isAnimationActive={false}
+                        />
+
+                        {/* Lower Bound dashed cyan */}
+                        <Line
+                            type="monotone"
+                            dataKey="forecastLower"
+                            name="Lower Bound (80%)"
+                            stroke="#22d3ee"
+                            strokeWidth={1.5}
+                            strokeDasharray="4 3"
+                            dot={false}
+                            activeDot={{ r: 4, fill: '#22d3ee' }}
+                            connectNulls
+                            isAnimationActive={false}
+                        />
+
+                        {/* Predicted median — solid purple, green dots */}
                         <Line
                             type="monotone"
                             dataKey="forecastMedian"
-                            name="Predicted (Candlestick)"
-                            stroke="#3b82f6"
-                            strokeWidth={0}
-                            dot={false}
-                            activeDot={false}
-                            isAnimationActive={false}
-                        />
-
-                        {/* Bound markers to make upper/lower limits easier to read */}
-                        <Line
-                            type="monotone"
-                            dataKey="candleHigh"
-                            name="Upper Bound (80%)"
-                            stroke="transparent"
-                            strokeWidth={0}
-                            dot={{ r: 3, fill: '#f59e0b', stroke: '#111827', strokeWidth: 1 }}
-                            activeDot={{ r: 5, fill: '#f59e0b' }}
-                            connectNulls
-                            isAnimationActive={false}
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="candleLow"
-                            name="Lower Bound (80%)"
-                            stroke="transparent"
-                            strokeWidth={0}
-                            dot={{ r: 3, fill: '#22d3ee', stroke: '#111827', strokeWidth: 1 }}
-                            activeDot={{ r: 5, fill: '#22d3ee' }}
+                            name="Predicted Median"
+                            stroke="#8b5cf6"
+                            strokeWidth={2.5}
+                            dot={{ r: 5, fill: '#22c55e', stroke: '#0f172a', strokeWidth: 2 }}
+                            activeDot={{ r: 7, fill: '#22c55e' }}
                             connectNulls
                             isAnimationActive={false}
                         />
 
-                        {/* Predicted candlesticks */}
-                        {chartData.flatMap((point, idx) => {
-                            const bullish = point.candleClose >= point.candleOpen;
-                            const bodyColor = bullish ? '#22c55e' : '#ef4444';
-                            const wickColor = '#93c5fd';
-
-                            return [
-                                <ReferenceLine
-                                    key={`${point.date}-${idx}-pred-wick`}
-                                    segment={[
-                                        { x: point.date, y: point.candleLow },
-                                        { x: point.date, y: point.candleHigh },
-                                    ]}
-                                    stroke={wickColor}
-                                    strokeWidth={2}
-                                />,
-                                <ReferenceLine
-                                    key={`${point.date}-${idx}-pred-body`}
-                                    segment={[
-                                        { x: point.date, y: point.candleOpen },
-                                        { x: point.date, y: point.candleClose },
-                                    ]}
-                                    stroke={bodyColor}
-                                    strokeWidth={8}
-                                />,
-                            ];
-                        })}
-
-                        {/* Actual line */}
-                        <Line
+                        {/* Actual price — green area line */}
+                        <Area
                             type="monotone"
                             dataKey="actual"
                             name="Actual Price"
                             stroke="#10b981"
                             strokeWidth={2.5}
-                            dot={{ fill: '#10b981', r: 4 }}
+                            fill="url(#actualGradH)"
+                            dot={{ r: 4, fill: '#10b981', stroke: '#0f172a', strokeWidth: 1.5 }}
                             activeDot={{ r: 6, fill: '#10b981' }}
                             connectNulls
                             isAnimationActive={false}
@@ -275,12 +277,12 @@ export default function HorizonChart({ data }: Props) {
                 <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
                     <div style={{
                         padding: 12,
-                        background: 'rgba(59, 130, 246, 0.05)',
+                        background: 'rgba(139, 92, 246, 0.05)',
                         borderRadius: 6,
-                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        border: '1px solid rgba(139, 92, 246, 0.2)',
                     }}>
                         <div style={{ fontSize: 10, color: '#64748b', marginBottom: 4 }}>Mean Absolute Error</div>
-                        <div style={{ fontSize: 16, fontWeight: 600, color: '#3b82f6' }}>{errorMetrics.mae.toFixed(4)}</div>
+                        <div style={{ fontSize: 16, fontWeight: 600, color: '#8b5cf6' }}>{errorMetrics.mae.toFixed(4)}</div>
                     </div>
                     <div style={{
                         padding: 12,
