@@ -1,3 +1,4 @@
+import React from 'react';
 import type { MarketStats } from '@/lib/types';
 import styles from './MarketSnapshot.module.css';
 import {
@@ -32,7 +33,7 @@ function Badge({ value, unit = '%' }: { value: number; unit?: string }) {
 function MetricCard({
     label, value, badge, type = 'neutral',
 }: {
-    label: string;
+    label: React.ReactNode;
     value: string;
     badge?: React.ReactNode;
     type?: 'up' | 'down' | 'neutral' | 'amber';
